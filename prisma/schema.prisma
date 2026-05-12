@@ -1,0 +1,48 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url dihapus dari sini sesuai aturan Prisma 7
+}
+
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  fullName      String
+  walletBalance Float     @default(0) // Saldo dompet dalam IDR asli
+  currency      String    @default("IDR") // Preferensi mata uang user
+  createdAt     DateTime  @default(now())
+  
+  // Relasi
+  accounts      TradingAccount[]
+  loans         Loan[]
+}
+
+model TradingAccount {
+  id            String   @id @default(uuid())
+  type          String   @default("MICRO_CHALLENGE") // Akun mikro Anda
+  initialBalance Float   @default(500000) // Default Rp 500rb
+  currentBalance Float   @default(500000)
+  profitTarget  Float    @default(40000)  // 8% target
+  maxLoss       Float    @default(50000)  // 10% limit
+  status        String   @default("ACTIVE") // ACTIVE, PASSED, FAILED
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model Loan {
+  id            String   @id @default(uuid())
+  amount        Float    // Jumlah pinjaman (Aurum Credit)
+  interest      Float    @default(0.02) // Bunga per hari (0.02%)
+  status        String   @default("ACTIVE") // ACTIVE, REPAID, LIQUIDATED
+  asset         String   // Aset yang dibeli (misal: XAUUSD)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+}
