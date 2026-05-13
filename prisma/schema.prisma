@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url dihapus dari sini sesuai aturan Prisma 7
+  url      = env("DATABASE_URL") // PASTIKAN BARIS INI ADA
 }
 
 

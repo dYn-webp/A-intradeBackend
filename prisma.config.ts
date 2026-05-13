@@ -1,13 +1,13 @@
 // prisma.config.ts
-import { defineConfig } from '@prisma/config';
+import { defineConfig, env } from 'prisma/config';
+import 'dotenv/config';
 
 export default defineConfig({
-  schema: {
-    kind: 'local',
-    path: 'prisma/schema.prisma',
-  },
-  migrate: {
-    // Di sini kita panggil URL dari .env
-    url: process.env.DATABASE_URL,
+  // PERBAIKAN: Schema harus berupa string langsung, bukan objek!
+  schema: 'prisma/schema.prisma',
+  
+  // PERBAIKAN: Menggunakan 'datasource', bukan 'migrate'
+  datasource: {
+    url: env('DATABASE_URL'),
   },
 });
