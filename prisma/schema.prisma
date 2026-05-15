@@ -6,42 +6,69 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url SUDAH DIHAPUS DARI SINI
+  // url akan dibaca otomatis dari file .env
 }
 
-
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  password      String
-  fullName      String
-  walletBalance Float     @default(0) // Saldo dompet dalam IDR asli
-  currency      String    @default("IDR") // Preferensi mata uang user
-  createdAt     DateTime  @default(now())
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  password           String
+  fullName           String
+  walletBalance      Float               @default(0) // [SALDO UTAMA]
+  currency           String              @default("IDR")
+  createdAt          DateTime            @default(now())
   
   // Relasi
-  accounts      TradingAccount[]
-  loans         Loan[]
+  tradingAccounts    TradingAccount[]
+  investmentAccounts InvestmentAccount[]
+  loans              Loan[]
 }
 
 model TradingAccount {
-  id            String   @id @default(uuid())
-  type          String   @default("MICRO_CHALLENGE") // Akun mikro Anda
-  initialBalance Float   @default(500000) // Default Rp 500rb
-  currentBalance Float   @default(500000)
-  profitTarget  Float    @default(40000)  // 8% target
-  maxLoss       Float    @default(50000)  // 10% limit
-  status        String   @default("ACTIVE") // ACTIVE, PASSED, FAILED
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  id             String       @id @default(uuid())
+  tradingId      String       @unique // ID Unik Trading (Contoh: T-88291)
+  currentBalance Float        @default(0) // [SALDO TRADING / EQUITY]
+  leverage       String       @default("1:500")
+  status         String       @default("ACTIVE")
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  
+  // Relasi ke Buku Order (Posisi Trading)
+  orders         TradeOrder[] 
+}
+
+// === MODEL BARU: MESIN B-BOOK ===
+model TradeOrder {
+  id               String         @id @default(uuid())
+  symbol           String         // Aset yang ditradingkan (Contoh: "XAUUSD")
+  orderType        String         // "BUY" atau "SELL"
+  lotSize          Float          // Ukuran lot (Contoh: 0.1)
+  openPrice        Float          // Harga saat posisi dibuka
+  closePrice       Float?         // Harga saat ditutup (Kosong jika masih OPEN)
+  floatingProfit   Float          @default(0) // Keuntungan/Kerugian berjalan
+  status           String         @default("OPEN") // "OPEN" atau "CLOSED"
+  openTime         DateTime       @default(now())
+  closeTime        DateTime?
+  
+  tradingAccountId String
+  tradingAccount   TradingAccount @relation(fields: [tradingAccountId], references: [id])
+}
+
+model InvestmentAccount {
+  id             String   @id @default(uuid())
+  investId       String   @unique 
+  currentBalance Float    @default(0) // [SALDO INVEST]
+  status         String   @default("ACTIVE")
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
 }
 
 model Loan {
   id            String   @id @default(uuid())
-  amount        Float    // Jumlah pinjaman (Aurum Credit)
-  interest      Float    @default(0.02) // Bunga per hari (0.02%)
-  status        String   @default("ACTIVE") // ACTIVE, REPAID, LIQUIDATED
-  asset         String   // Aset yang dibeli (misal: XAUUSD)
+  amount        Float   
+  interest      Float    @default(0.02)
+  status        String   @default("ACTIVE") 
+  asset         String   
   userId        String
   user          User     @relation(fields: [userId], references: [id])
   createdAt     DateTime @default(now())
